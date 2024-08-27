@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// npx prisma migrate
+// then
+// npx prisma generate 
+
+// ! these steps are done after changes in the schema.prisma file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TxnStatus{
+  Processing
+  Success
+  Failure
+}
+
+
+model User{
+  id Int @id @default(autoincrement())
+  name String?
+  email String
+  address String @unique
+  tasks Task[] 
+  payouts Payouts[]
+}
+
+model Task{
+  id Int @id @default(autoincrement())
+  title String
+  amount Int
+  done Boolean @default(false)
+  signature String
+  options Options[]
+  userId Int
+  user User @relation(fields: [userId],references: [id])
+  submissios Submission[]
+}
+
+model Options{
+  id Int @id @default(autoincrement())
+  image_url String?
+  description String
+  task Task @relation(fields: [taskId],references: [id])
+  taskId Int
+  submissions Submission[]
+}
+
+model Worker{
+  id Int @id @default(autoincrement())
+  name String?
+  email String
+  address String @unique
+  submissions Submission[]
+  pending_amount Int
+  locked_amount Int
+  status TxnStatus?
+}
+
+model Submission {
+  id Int @id @default(autoincrement())
+  worker_id Int
+  worker Worker @relation(fields: [worker_id],references: [id]) 
+  task_id Int
+  task Task @relation(fields: [task_id],references: [id])
+  option_id Int
+  option Options @relation(fields: [option_id],references: [id])
+  amount Int
+  @@unique([worker_id,task_id])
+}
+
+model Payouts{
+  id Int @id @default(autoincrement())
+  user_id Int
+  users User @relation(fields: [user_id],references: [id])
+  amount Int
+  signature String
+  status TxnStatus
+}
+
+
